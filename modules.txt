@@ -2,3 +2,5 @@
 # module-name|git-url|branch
 
 mod-playerbots|https://github.com/mod-playerbots/mod-playerbots.git|master
+mod-individual-progression|https://github.com/ZhengPeiRu21/mod-individual-progression.git|master
+mod-ah-bot|https://github.com/azerothcore/mod-ah-bot.git|master
