@@ -12,6 +12,7 @@ fi
 source "$SCRIPT_DIR/config.env"
 
 COMMAND="${1:-all}"
+MODULES=()
 
 log() {
   echo
@@ -55,25 +56,9 @@ remote_tty() {
   ssh -t "$REMOTE_HOST" "$@"
 }
 
-check_prereqs() {
-  log "Checking prerequisites"
+load_modules() {
+  MODULES=()
 
-  for cmd in git cmake make rsync ssh; do
-    require_cmd "$cmd"
-  done
-
-  if [[ ! -f "$SCRIPT_DIR/modules.txt" ]]; then
-    echo "Missing modules.txt"
-    exit 1
-  fi
-}
-
-check_remote() {
-  log "Checking SSH access to remote server"
-  remote "echo Connected to \$(hostname) as \$(whoami)"
-}
-
-read_modules() {
   while IFS='|' read -r module_name module_url module_branch || [[ -n "${module_name:-}" ]]; do
     module_name="$(trim "${module_name:-}")"
     module_url="$(trim "${module_url:-}")"
@@ -88,8 +73,33 @@ read_modules() {
       exit 1
     fi
 
-    printf '%s|%s|%s\n' "$module_name" "$module_url" "$module_branch"
+    MODULES+=("$module_name|$module_url|$module_branch")
   done < "$SCRIPT_DIR/modules.txt"
+
+  if [[ "${#MODULES[@]}" -eq 0 ]]; then
+    echo "No modules found in modules.txt"
+    exit 1
+  fi
+}
+
+check_prereqs() {
+  log "Checking prerequisites"
+
+  for cmd in git cmake make rsync ssh; do
+    require_cmd "$cmd"
+  done
+
+  if [[ ! -f "$SCRIPT_DIR/modules.txt" ]]; then
+    echo "Missing modules.txt"
+    exit 1
+  fi
+
+  load_modules
+}
+
+check_remote() {
+  log "Checking SSH access to remote server"
+  remote "echo Connected to \$(hostname) as \$(whoami)"
 }
 
 validate_local_modules() {
@@ -101,7 +111,9 @@ validate_local_modules() {
     exit 1
   fi
 
-  while IFS='|' read -r module_name module_url module_branch; do
+  for module in "${MODULES[@]}"; do
+    IFS='|' read -r module_name module_url module_branch <<< "$module"
+
     module_dir="$SOURCE_DIR/modules/$module_name"
 
     if [[ ! -d "$module_dir" ]]; then
@@ -116,7 +128,7 @@ validate_local_modules() {
     fi
 
     echo "OK: $module_name"
-  done < <(read_modules)
+  done
 }
 
 sync_source() {
@@ -140,7 +152,9 @@ sync_source() {
 
   mkdir -p "$SOURCE_DIR/modules"
 
-  while IFS='|' read -r module_name module_url module_branch; do
+  for module in "${MODULES[@]}"; do
+    IFS='|' read -r module_name module_url module_branch <<< "$module"
+
     module_dir="$SOURCE_DIR/modules/$module_name"
 
     echo
@@ -157,7 +171,7 @@ sync_source() {
       run git checkout "$module_branch"
       run git pull --ff-only origin "$module_branch"
     fi
-  done < <(read_modules)
+  done
 
   validate_local_modules
 }
@@ -317,7 +331,9 @@ deploy_source_sql() {
 
   log "Deploying module source trees to remote"
 
-  while IFS='|' read -r module_name module_url module_branch; do
+  for module in "${MODULES[@]}"; do
+    IFS='|' read -r module_name module_url module_branch <<< "$module"
+
     module_dir="$SOURCE_DIR/modules/$module_name"
     remote_module_dir="$REMOTE_SOURCE_DIR/modules/$module_name"
 
@@ -339,7 +355,7 @@ deploy_source_sql() {
       --exclude='build/' \
       "$module_dir/" \
       "$REMOTE_HOST:$remote_module_dir/"
-  done < <(read_modules)
+  done
 
   log "Checking deployed module SQL files"
 
