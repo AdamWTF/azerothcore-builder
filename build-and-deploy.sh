@@ -211,7 +211,7 @@ if [[ -d "$STAGED_SERVER_DIR/etc" ]]; then
     "$REMOTE_HOST:$REMOTE_INSTALL_DIR/etc/"
 fi
 
-log "Deploying SQL source tree to remote"
+log "Deploying AzerothCore SQL source tree to remote"
 
 remote "mkdir -p '$REMOTE_SOURCE_DIR/data' '$REMOTE_SOURCE_DIR/modules'"
 
@@ -219,18 +219,39 @@ run rsync -avh --delete \
   "$SOURCE_DIR/data/sql/" \
   "$REMOTE_HOST:$REMOTE_SOURCE_DIR/data/sql/"
 
+log "Deploying module source trees to remote"
+
 while IFS='|' read -r module_name module_url module_branch; do
   [[ -z "${module_name// }" ]] && continue
   [[ "$module_name" =~ ^# ]] && continue
 
-  if [[ -d "$SOURCE_DIR/modules/$module_name/sql" ]]; then
-    remote "mkdir -p '$REMOTE_SOURCE_DIR/modules/$module_name/sql'"
+  module_dir="$SOURCE_DIR/modules/$module_name"
+  remote_module_dir="$REMOTE_SOURCE_DIR/modules/$module_name"
 
-    run rsync -avh --delete \
-      "$SOURCE_DIR/modules/$module_name/sql/" \
-      "$REMOTE_HOST:$REMOTE_SOURCE_DIR/modules/$module_name/sql/"
+  if [[ ! -d "$module_dir" ]]; then
+    echo "Skipping missing module directory: $module_dir"
+    continue
   fi
+
+  echo
+  echo "Deploying module source: $module_name"
+
+  remote "mkdir -p '$remote_module_dir'"
+
+  run rsync -avh --delete \
+    --exclude='.git/' \
+    --exclude='build/' \
+    "$module_dir/" \
+    "$REMOTE_HOST:$remote_module_dir/"
 done < "$SCRIPT_DIR/modules.txt"
+
+log "Checking deployed module SQL files"
+
+remote "
+  echo
+  echo 'Module SQL files deployed:'
+  find '$REMOTE_SOURCE_DIR/modules' -type f -name '*.sql' | sort
+"
 
 log "Fixing remote ownership and permissions"
 
