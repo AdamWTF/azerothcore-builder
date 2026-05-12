@@ -25,6 +25,21 @@ run() {
   "$@"
 }
 
+trim() {
+  local value="$1"
+
+  # Remove Windows carriage returns.
+  value="${value//$'\r'/}"
+
+  # Trim leading whitespace.
+  value="${value#"${value%%[![:space:]]*}"}"
+
+  # Trim trailing whitespace.
+  value="${value%"${value##*[![:space:]]}"}"
+
+  printf '%s' "$value"
+}
+
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "Missing required command: $1"
@@ -58,6 +73,52 @@ check_remote() {
   remote "echo Connected to \$(hostname) as \$(whoami)"
 }
 
+read_modules() {
+  while IFS='|' read -r module_name module_url module_branch || [[ -n "${module_name:-}" ]]; do
+    module_name="$(trim "${module_name:-}")"
+    module_url="$(trim "${module_url:-}")"
+    module_branch="$(trim "${module_branch:-}")"
+
+    [[ -z "$module_name" ]] && continue
+    [[ "$module_name" =~ ^# ]] && continue
+
+    if [[ -z "$module_url" || -z "$module_branch" ]]; then
+      echo "Invalid modules.txt line for module '$module_name'. Expected:"
+      echo "module-name|git-url|branch"
+      exit 1
+    fi
+
+    printf '%s|%s|%s\n' "$module_name" "$module_url" "$module_branch"
+  done < "$SCRIPT_DIR/modules.txt"
+}
+
+validate_local_modules() {
+  log "Validating local modules"
+
+  if [[ ! -d "$SOURCE_DIR/modules" ]]; then
+    echo "Missing local modules directory: $SOURCE_DIR/modules"
+    echo "Run: ./build-and-deploy.sh sync-source"
+    exit 1
+  fi
+
+  while IFS='|' read -r module_name module_url module_branch; do
+    module_dir="$SOURCE_DIR/modules/$module_name"
+
+    if [[ ! -d "$module_dir" ]]; then
+      echo "Expected module is missing locally: $module_name"
+      echo "Missing path: $module_dir"
+      echo "Run: ./build-and-deploy.sh sync-source"
+      exit 1
+    fi
+
+    if [[ ! -d "$module_dir/.git" ]]; then
+      echo "Warning: module directory exists but is not a git repo: $module_dir"
+    fi
+
+    echo "OK: $module_name"
+  done < <(read_modules)
+}
+
 sync_source() {
   log "Preparing local directories"
 
@@ -80,15 +141,13 @@ sync_source() {
   mkdir -p "$SOURCE_DIR/modules"
 
   while IFS='|' read -r module_name module_url module_branch; do
-    [[ -z "${module_name// }" ]] && continue
-    [[ "$module_name" =~ ^# ]] && continue
-
     module_dir="$SOURCE_DIR/modules/$module_name"
 
     echo
     echo "Module: $module_name"
     echo "Repo:   $module_url"
     echo "Branch: $module_branch"
+    echo "Dir:    $module_dir"
 
     if [[ ! -d "$module_dir/.git" ]]; then
       run git clone "$module_url" --branch "$module_branch" "$module_dir"
@@ -98,10 +157,14 @@ sync_source() {
       run git checkout "$module_branch"
       run git pull --ff-only origin "$module_branch"
     fi
-  done < "$SCRIPT_DIR/modules.txt"
+  done < <(read_modules)
+
+  validate_local_modules
 }
 
 build_server() {
+  validate_local_modules
+
   log "Cleaning build and staging directories"
 
   rm -rf "$BUILD_DIR"
@@ -202,6 +265,7 @@ stop_services() {
 
 deploy_server() {
   validate_staged_build
+  validate_local_modules
   prepare_remote_dirs
   backup_remote_etc
   stop_services
@@ -241,6 +305,8 @@ deploy_server() {
 }
 
 deploy_source_sql() {
+  validate_local_modules
+
   log "Deploying AzerothCore SQL source tree to remote"
 
   remote "mkdir -p '$REMOTE_SOURCE_DIR/data' '$REMOTE_SOURCE_DIR/modules'"
@@ -252,19 +318,19 @@ deploy_source_sql() {
   log "Deploying module source trees to remote"
 
   while IFS='|' read -r module_name module_url module_branch; do
-    [[ -z "${module_name// }" ]] && continue
-    [[ "$module_name" =~ ^# ]] && continue
-
     module_dir="$SOURCE_DIR/modules/$module_name"
     remote_module_dir="$REMOTE_SOURCE_DIR/modules/$module_name"
 
     if [[ ! -d "$module_dir" ]]; then
-      echo "Skipping missing module directory: $module_dir"
-      continue
+      echo "Missing module directory: $module_dir"
+      echo "Run: ./build-and-deploy.sh sync-source"
+      exit 1
     fi
 
     echo
     echo "Deploying module source: $module_name"
+    echo "From: $module_dir"
+    echo "To:   $REMOTE_HOST:$remote_module_dir"
 
     remote "mkdir -p '$remote_module_dir'"
 
@@ -273,11 +339,15 @@ deploy_source_sql() {
       --exclude='build/' \
       "$module_dir/" \
       "$REMOTE_HOST:$remote_module_dir/"
-  done < "$SCRIPT_DIR/modules.txt"
+  done < <(read_modules)
 
   log "Checking deployed module SQL files"
 
   remote "
+    echo
+    echo 'Deployed module directories:'
+    find '$REMOTE_SOURCE_DIR/modules' -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
+
     echo
     echo 'Module SQL files deployed:'
     find '$REMOTE_SOURCE_DIR/modules' -type f -name '*.sql' | sort
@@ -293,9 +363,11 @@ fix_remote_permissions() {
     remote_tty "sudo find '$REMOTE_INSTALL_DIR' '$REMOTE_SOURCE_DIR' -type f -exec chmod 664 {} \;"
     remote_tty "sudo chmod +x '$REMOTE_INSTALL_DIR/bin/authserver' '$REMOTE_INSTALL_DIR/bin/worldserver'"
 
-    remote_tty "sudo chown -R '$REMOTE_USER':acore '$REMOTE_INSTALL_DIR/etc'"
-    remote_tty "sudo find '$REMOTE_INSTALL_DIR/etc' -type d -exec chmod 775 {} \;"
-    remote_tty "sudo find '$REMOTE_INSTALL_DIR/etc' -type f -exec chmod 664 {} \;"
+    if remote "[ -d '$REMOTE_INSTALL_DIR/etc' ]"; then
+      remote_tty "sudo chown -R '$REMOTE_USER':acore '$REMOTE_INSTALL_DIR/etc'"
+      remote_tty "sudo find '$REMOTE_INSTALL_DIR/etc' -type d -exec chmod 775 {} \;"
+      remote_tty "sudo find '$REMOTE_INSTALL_DIR/etc' -type f -exec chmod 664 {} \;"
+    fi
   else
     remote_tty "sudo chown -R '$REMOTE_USER':'$REMOTE_USER' '$REMOTE_INSTALL_DIR' '$REMOTE_SOURCE_DIR'"
     remote_tty "sudo chmod +x '$REMOTE_INSTALL_DIR/bin/authserver' '$REMOTE_INSTALL_DIR/bin/worldserver'"
@@ -307,6 +379,7 @@ fix_remote_permissions() {
     echo
     echo 'Available config templates:'
     find '$REMOTE_INSTALL_DIR/etc' -type f -name '*.conf.dist' | sort
+
     echo
     echo 'Existing real configs:'
     find '$REMOTE_INSTALL_DIR/etc' -type f -name '*.conf' | sort
@@ -361,6 +434,8 @@ Commands:
 
 Examples:
   ./build-and-deploy.sh all
+  ./build-and-deploy.sh sync-source
+  ./build-and-deploy.sh sql
   ./build-and-deploy.sh deploy
   ./build-and-deploy.sh restart
   ./build-and-deploy.sh logs
