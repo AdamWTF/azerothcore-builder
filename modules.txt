@@ -1,0 +1,4 @@
+# format:
+# module-name|git-url|branch
+
+mod-playerbots|https://github.com/mod-playerbots/mod-playerbots.git|master
