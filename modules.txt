@@ -8,7 +8,7 @@ mod-ah-bot|https://github.com/azerothcore/mod-ah-bot.git|master
 mod_weather_vibe|https://github.com/hermensbas/mod_weather_vibe.git|main
 mod-fly-anywhere|https://github.com/abracadaniel22/mod-fly-anywhere.git|main
 mod-npc-enchanter|https://github.com/azerothcore/mod-npc-enchanter.git|master
-mod-solo-lfg|https://github.com/azerothcore/mod-solo-lfg.git|main
+mod-solo-lfg|https://github.com/azerothcore/mod-solo-lfg.git|master
 mod-who-logged|https://github.com/azerothcore/mod-who-logged.git|master
 mod-1v1-arena|https://github.com/azerothcore/mod-1v1-arena.git|master
 mod-account-achievements|https://github.com/azerothcore/mod-account-achievements.git|master
