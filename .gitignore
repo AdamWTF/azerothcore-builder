@@ -1,0 +1,8 @@
+config.env
+*.log
+*.tar.gz
+.DS_Store
+
+# Local build/staging paths if kept inside the repo
+build/
+staging/
