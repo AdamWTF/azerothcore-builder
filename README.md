@@ -1,4 +1,4 @@
-# acore-manager
+# Acore Manager
 
 `acore-manager` is a reusable Linux server manager for AzerothCore. It provides small shell tools for updating source and modules, building staged server files, creating timestamped releases, switching or rolling back releases, managing systemd services, viewing logs, and backing up configuration and databases.
 
