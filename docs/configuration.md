@@ -1,0 +1,76 @@
+# Configuration
+
+Committed defaults live in:
+
+```text
+config/defaults/
+```
+
+Local machine-specific configuration lives in:
+
+```text
+config/local/
+```
+
+Files under `config/local/manager.conf`, `config/local/modules.txt`, and `config/local/db.conf` are ignored by git.
+
+## Manager Config
+
+Start from the example:
+
+```bash
+cp config/defaults/manager.conf.example config/local/manager.conf
+```
+
+Important values:
+
+```bash
+ACM_ROOT="/opt/acore-manager"
+ACORE_REPO="https://github.com/azerothcore/azerothcore-wotlk.git"
+ACORE_BRANCH="master"
+ACORE_USER="azerothcore"
+ACORE_GROUP="azerothcore"
+AUTH_SERVICE="azerothcore-auth.service"
+WORLD_SERVICE="azerothcore-world.service"
+DATADIR="/opt/acore-manager/shared/data"
+CONFIG_DIR="/opt/acore-manager/shared/configs"
+BUILD_TYPE="RelWithDebInfo"
+BUILD_THREADS="auto"
+```
+
+Derived paths are created by `scripts/lib/common.sh`, including `SOURCE_DIR`, `MODULES_DIR`, `BUILD_DIR`, `RELEASES_DIR`, `CURRENT_LINK`, `SHARED_DIR`, and `BACKUP_DIR`.
+
+## Database Config
+
+Database credentials are optional for build/runtime scripts, but required for DB checks and backups.
+
+```bash
+cp config/defaults/db.conf.example config/local/db.conf
+```
+
+Use local or remote MySQL values:
+
+```bash
+MYSQL_HOST="<mysql-host>"
+MYSQL_PORT="3306"
+MYSQL_USER="<mysql-user>"
+MYSQL_PASSWORD="<mysql-password>"
+```
+
+Do not commit real credentials.
+
+## Validate
+
+```bash
+./bin/acore-manager validate
+```
+
+This checks required variables, required commands, service names, and path status.
+
+## Back Up Configuration
+
+```bash
+./bin/acore-manager config-backup
+```
+
+This backs up shared configs, `config/local`, and installed systemd service files when present. Missing optional paths produce warnings.
