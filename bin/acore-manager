@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$BIN_DIR/.." && pwd)"
+
+usage() {
+  cat <<EOF
+Usage:
+  acore-manager <command> [args...]
+
+Commands:
+  status           Show runtime status
+  validate         Validate config and required commands
+  start            Start auth and world services
+  stop             Stop world and auth services
+  restart          Restart world and auth services safely
+  restart-world    Restart world service
+  restart-auth     Restart auth service
+  logs-world       Follow world service logs
+  logs-auth        Follow auth service logs
+  last-errors      Show recent auth/world errors and warnings
+  update-source    Clone or update AzerothCore source
+  update-modules   Clone or update configured modules
+  build            Build AzerothCore into staging
+  create-release   Create a timestamped release from staging
+  release-latest   Run update, build, release, switch, and status workflow
+  list-releases    List releases and mark the active release
+  switch-release   Switch to a named release
+  rollback         Roll back to the previous release
+  db-check         Check MySQL connectivity and databases
+  db-backup        Back up configured MySQL databases
+  config-backup    Back up local/shared config
+  config-diff      Compare live configs against .dist files
+EOF
+}
+
+die() {
+  echo "Error: $*" >&2
+  echo >&2
+  usage >&2
+  exit 1
+}
+
+script_for_command() {
+  case "$1" in
+    status) echo "scripts/runtime/acore-status.sh" ;;
+    validate) echo "scripts/config/acore-validate-config.sh" ;;
+    start) echo "scripts/runtime/acore-start.sh" ;;
+    stop) echo "scripts/runtime/acore-stop.sh" ;;
+    restart) echo "scripts/runtime/acore-restart.sh" ;;
+    restart-world) echo "scripts/runtime/acore-restart-world.sh" ;;
+    restart-auth) echo "scripts/runtime/acore-restart-auth.sh" ;;
+    logs-world) echo "scripts/logs/acore-logs-world.sh" ;;
+    logs-auth) echo "scripts/logs/acore-logs-auth.sh" ;;
+    last-errors) echo "scripts/logs/acore-last-errors.sh" ;;
+    update-source) echo "scripts/source/acore-update-source.sh" ;;
+    update-modules) echo "scripts/source/acore-update-modules.sh" ;;
+    build) echo "scripts/build/acore-build.sh" ;;
+    create-release) echo "scripts/build/acore-create-release.sh" ;;
+    release-latest) echo "scripts/build/acore-release-latest.sh" ;;
+    list-releases) echo "scripts/releases/acore-list-releases.sh" ;;
+    switch-release) echo "scripts/releases/acore-switch-release.sh" ;;
+    rollback) echo "scripts/releases/acore-rollback.sh" ;;
+    db-check) echo "scripts/db/acore-db-check.sh" ;;
+    db-backup) echo "scripts/db/acore-db-backup.sh" ;;
+    config-backup) echo "scripts/config/acore-config-backup.sh" ;;
+    config-diff) echo "scripts/config/acore-config-diff.sh" ;;
+    *) return 1 ;;
+  esac
+}
+
+if [[ "$#" -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+command_name="$1"
+shift
+
+case "$command_name" in
+  help|-h|--help)
+    usage
+    exit 0
+    ;;
+esac
+
+script_relative="$(script_for_command "$command_name")" || die "unknown command: $command_name"
+script_path="$REPO_ROOT/$script_relative"
+
+if [[ ! -f "$script_path" ]]; then
+  die "command '$command_name' maps to a missing script: $script_relative"
+fi
+
+if [[ ! -x "$script_path" ]]; then
+  die "command '$command_name' maps to a non-executable script: $script_relative"
+fi
+
+exec "$script_path" "$@"
