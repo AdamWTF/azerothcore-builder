@@ -20,8 +20,19 @@ if [[ -f "$ACM_LOCAL_CONFIG" ]]; then
   source "$ACM_LOCAL_CONFIG"
 fi
 
-SOURCE_DIR="$ACM_ROOT/source"
-MODULES_DIR="$SOURCE_DIR/modules"
+# SOURCE_ROOT is the parent directory for source checkouts.
+SOURCE_ROOT="$ACM_ROOT/source"
+
+# ACORE_SOURCE_DIR is the AzerothCore git checkout.
+ACORE_SOURCE_DIR="$SOURCE_ROOT/azerothcore"
+
+# MODULES_DIR lives inside the AzerothCore checkout.
+MODULES_DIR="$ACORE_SOURCE_DIR/modules"
+
+# Backwards-compatible alias for scripts that still expect SOURCE_DIR to mean
+# the AzerothCore checkout. Do not use SOURCE_DIR for the parent directory.
+SOURCE_DIR="$ACORE_SOURCE_DIR"
+
 BUILD_DIR="$ACM_ROOT/build"
 RELEASES_DIR="$ACM_ROOT/releases"
 CURRENT_LINK="$ACM_ROOT/current"

@@ -105,7 +105,7 @@ ensure_directories() {
 
   install -d -m 0755 \
     "$ACM_ROOT" \
-    "$SOURCE_DIR" \
+    "$SOURCE_ROOT" \
     "$BUILD_DIR" \
     "$RELEASES_DIR" \
     "$SHARED_DIR" \
@@ -116,7 +116,7 @@ ensure_directories() {
 
   chown -R "$ACORE_USER:$ACORE_GROUP" \
     "$ACM_ROOT" \
-    "$SOURCE_DIR" \
+    "$SOURCE_ROOT" \
     "$BUILD_DIR" \
     "$RELEASES_DIR" \
     "$SHARED_DIR" \

@@ -85,9 +85,9 @@ else
 fi
 
 log "Source Commit"
-if [[ -d "$SOURCE_DIR/.git" ]]; then
-  git -C "$SOURCE_DIR" rev-parse --short HEAD
-  git -C "$SOURCE_DIR" log -1 --pretty='format:%h %ci %s%n'
+if [[ -d "$ACORE_SOURCE_DIR/.git" ]]; then
+  git -C "$ACORE_SOURCE_DIR" rev-parse --short HEAD
+  git -C "$ACORE_SOURCE_DIR" log -1 --pretty='format:%h %ci %s%n'
 else
-  echo "WARN: SOURCE_DIR is not a git repository: $SOURCE_DIR"
+  echo "WARN: ACORE_SOURCE_DIR is not a git repository: $ACORE_SOURCE_DIR"
 fi

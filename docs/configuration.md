@@ -38,7 +38,20 @@ BUILD_TYPE="RelWithDebInfo"
 BUILD_THREADS="auto"
 ```
 
-Derived paths are created by `scripts/lib/common.sh`, including `SOURCE_DIR`, `MODULES_DIR`, `BUILD_DIR`, `RELEASES_DIR`, `CURRENT_LINK`, `SHARED_DIR`, and `BACKUP_DIR`.
+Derived paths are created by `scripts/lib/common.sh`, including:
+
+```bash
+SOURCE_ROOT="/opt/acore-manager/source"
+ACORE_SOURCE_DIR="/opt/acore-manager/source/azerothcore"
+MODULES_DIR="/opt/acore-manager/source/azerothcore/modules"
+BUILD_DIR="/opt/acore-manager/build"
+RELEASES_DIR="/opt/acore-manager/releases"
+CURRENT_LINK="/opt/acore-manager/current"
+SHARED_DIR="/opt/acore-manager/shared"
+BACKUP_DIR="/opt/acore-manager/backups"
+```
+
+`SOURCE_ROOT` is only the parent directory. `ACORE_SOURCE_DIR` is the AzerothCore git checkout.
 
 ## Database Config
 

@@ -55,6 +55,7 @@ set -Eeuo pipefail
 
 - Source `scripts/lib/common.sh` instead of duplicating config/path logic.
 - Use configured values from common config, especially `ACM_ROOT`, `CURRENT_LINK`, `AUTH_SERVICE`, and `WORLD_SERVICE`.
+- Treat `SOURCE_ROOT` as the source parent directory and `ACORE_SOURCE_DIR` as the AzerothCore git checkout.
 - Keep scripts idempotent where practical.
 - Check required commands before using them.
 - Print clear status messages before important actions.

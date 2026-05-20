@@ -7,6 +7,8 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 command -v git >/dev/null 2>&1 || die "git is not available"
 
+[[ -d "$ACORE_SOURCE_DIR/.git" ]] || die "ACORE_SOURCE_DIR is not an AzerothCore git checkout: $ACORE_SOURCE_DIR"
+
 MODULES_FILE="$ACM_REPO_ROOT/config/local/modules.txt"
 if [[ ! -f "$MODULES_FILE" ]]; then
   MODULES_FILE="$ACM_REPO_ROOT/config/defaults/modules.txt.example"
@@ -42,10 +44,10 @@ while IFS='|' read -r module_name module_url module_branch || [[ -n "${module_na
   listed_modules["$module_name"]=1
 done < "$MODULES_FILE"
 
+mkdir -p "$MODULES_DIR"
+
 if [[ "${#modules[@]}" -eq 0 ]]; then
   echo "No modules configured."
-else
-  mkdir -p "$MODULES_DIR"
 fi
 
 for module in "${modules[@]}"; do

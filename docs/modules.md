@@ -31,6 +31,12 @@ Blank lines and comments are ignored.
 ./bin/acore-manager update-modules
 ```
 
-The script clones missing modules into `MODULES_DIR`, fetches and pulls existing module repositories, and prints each module commit hash.
+The script clones missing modules into:
+
+```text
+/opt/acore-manager/source/azerothcore/modules
+```
+
+It fetches and pulls existing module repositories, and prints each module commit hash.
 
 If `MODULES_DIR` contains directories not listed in the module file, the script warns only. It does not delete modules.

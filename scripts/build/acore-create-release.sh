@@ -32,8 +32,8 @@ fi
 mkdir -p "$release_dir/metadata"
 
 source_commit="unavailable"
-if [[ -d "$SOURCE_DIR/.git" ]]; then
-  source_commit="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || printf 'unavailable')"
+if [[ -d "$ACORE_SOURCE_DIR/.git" ]]; then
+  source_commit="$(git -C "$ACORE_SOURCE_DIR" rev-parse HEAD 2>/dev/null || printf 'unavailable')"
 fi
 
 {
@@ -43,7 +43,8 @@ fi
   echo
   echo "Paths:"
   echo "  ACM_ROOT: $ACM_ROOT"
-  echo "  SOURCE_DIR: $SOURCE_DIR"
+  echo "  SOURCE_ROOT: $SOURCE_ROOT"
+  echo "  ACORE_SOURCE_DIR: $ACORE_SOURCE_DIR"
   echo "  MODULES_DIR: $MODULES_DIR"
   echo "  BUILD_DIR: $BUILD_DIR"
   echo "  STAGING_DIR: $STAGING_DIR"

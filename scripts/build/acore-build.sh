@@ -8,8 +8,8 @@ source "$SCRIPT_DIR/../lib/common.sh"
 command -v cmake >/dev/null 2>&1 || die "cmake is not available"
 command -v make >/dev/null 2>&1 || die "make is not available"
 
-[[ -d "$SOURCE_DIR" ]] || die "SOURCE_DIR does not exist: $SOURCE_DIR"
-[[ -f "$SOURCE_DIR/CMakeLists.txt" ]] || die "SOURCE_DIR does not look like an AzerothCore source tree: $SOURCE_DIR"
+[[ -d "$ACORE_SOURCE_DIR" ]] || die "ACORE_SOURCE_DIR does not exist: $ACORE_SOURCE_DIR"
+[[ -f "$ACORE_SOURCE_DIR/CMakeLists.txt" ]] || die "ACORE_SOURCE_DIR does not look like an AzerothCore source tree: $ACORE_SOURCE_DIR"
 
 STAGING_DIR="$BUILD_DIR/staging"
 
@@ -28,7 +28,7 @@ rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 
 log "Configuring AzerothCore"
-cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
+cmake -S "$ACORE_SOURCE_DIR" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DCMAKE_INSTALL_PREFIX="$STAGING_DIR"
 

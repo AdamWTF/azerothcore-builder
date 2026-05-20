@@ -42,6 +42,16 @@ check_path() {
   fi
 }
 
+check_source_checkout() {
+  if [[ -d "$ACORE_SOURCE_DIR/.git" ]]; then
+    echo "OK: ACORE_SOURCE_DIR is a git checkout: $ACORE_SOURCE_DIR"
+  elif [[ -e "$ACORE_SOURCE_DIR" ]]; then
+    echo "WARN: ACORE_SOURCE_DIR exists but is not a git checkout: $ACORE_SOURCE_DIR"
+  else
+    echo "WARN: ACORE_SOURCE_DIR does not exist yet; run acore-update-source.sh to clone it: $ACORE_SOURCE_DIR"
+  fi
+}
+
 log "Required Variables"
 for name in \
   ACM_ROOT \
@@ -70,6 +80,8 @@ done
 
 log "Paths"
 check_path "ACM_ROOT" "$ACM_ROOT"
+check_path "SOURCE_ROOT" "$SOURCE_ROOT"
+check_source_checkout
 check_path "DATADIR" "$DATADIR"
 check_path "CONFIG_DIR" "$CONFIG_DIR"
 

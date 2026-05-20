@@ -8,7 +8,11 @@ The build workflow is split into small scripts. You can run them individually or
 ./bin/acore-manager update-source
 ```
 
-This clones or updates `ACORE_REPO` at `ACORE_BRANCH` into `SOURCE_DIR`.
+This clones or updates `ACORE_REPO` at `ACORE_BRANCH` into:
+
+```text
+/opt/acore-manager/source/azerothcore
+```
 
 ## Update Modules
 
@@ -16,7 +20,11 @@ This clones or updates `ACORE_REPO` at `ACORE_BRANCH` into `SOURCE_DIR`.
 ./bin/acore-manager update-modules
 ```
 
-This clones or updates configured modules into `MODULES_DIR`.
+This clones or updates configured modules into:
+
+```text
+/opt/acore-manager/source/azerothcore/modules
+```
 
 ## Build
 
