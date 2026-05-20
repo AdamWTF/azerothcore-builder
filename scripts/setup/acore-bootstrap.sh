@@ -39,6 +39,18 @@ require_root() {
   fi
 }
 
+fix_executable_permissions() {
+  local fixer="$ACM_REPO_ROOT/scripts/setup/acore-fix-permissions.sh"
+
+  log "Checking script executable permissions"
+
+  if [[ -f "$fixer" ]]; then
+    bash "$fixer"
+  else
+    echo "WARN: permission helper is missing: $fixer"
+  fi
+}
+
 install_packages() {
   log "Installing required packages"
 
@@ -211,6 +223,7 @@ EOF
 }
 
 require_root
+fix_executable_permissions
 install_packages
 ensure_group
 ensure_user

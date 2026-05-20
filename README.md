@@ -15,6 +15,8 @@ Default install root:
 Clone the repository on the Linux host, then run the bootstrap:
 
 ```bash
+find scripts -type f -name "*.sh" -exec chmod +x {} \;
+chmod +x bin/acore-manager 2>/dev/null || true
 sudo ./scripts/setup/acore-bootstrap.sh
 ```
 
@@ -54,3 +56,9 @@ After a release exists, switch to it:
 - [Database Backups](docs/database-backups.md)
 - [OliveTin](docs/olivetin.md)
 - [Troubleshooting](docs/troubleshooting.md)
+
+If a script fails with `Permission denied`, run:
+
+```bash
+sudo bash /opt/acore-manager/scripts/setup/acore-fix-permissions.sh
+```
