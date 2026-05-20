@@ -78,6 +78,26 @@ If dependencies are missing on Ubuntu/Debian, rerun:
 sudo ./scripts/setup/acore-bootstrap.sh
 ```
 
+## Build Fails In Jemalloc With GCC 15
+
+Symptom:
+
+```text
+deps/jemalloc/src/safety_check.c
+error: conflicting types for 'je_safety_check_set_abort'
+```
+
+This is a compiler/dependency compatibility issue between GCC 15 and AzerothCore's bundled jemalloc, not an `acore-manager` workflow problem.
+
+Workaround:
+
+```bash
+echo 'CMAKE_EXTRA_FLAGS="-DNOJEM=1"' | sudo tee -a config/local/manager.conf
+./bin/acore-manager build
+```
+
+`NOJEM` disables jemalloc. Treat this as a local workaround, not a universal default.
+
 ## Release Switch Fails
 
 List releases:

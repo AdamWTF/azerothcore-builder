@@ -21,3 +21,4 @@ CONFIG_DIR="/opt/acore-manager/shared/configs"
 
 BUILD_TYPE="RelWithDebInfo"
 BUILD_THREADS="auto"
+CMAKE_EXTRA_FLAGS=""

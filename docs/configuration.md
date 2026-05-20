@@ -36,6 +36,13 @@ DATADIR="/opt/acore-manager/shared/data"
 CONFIG_DIR="/opt/acore-manager/shared/configs"
 BUILD_TYPE="RelWithDebInfo"
 BUILD_THREADS="auto"
+CMAKE_EXTRA_FLAGS=""
+```
+
+Use `CMAKE_EXTRA_FLAGS` for advanced local CMake options that should not become project defaults. For example:
+
+```bash
+CMAKE_EXTRA_FLAGS="-DNOJEM=1"
 ```
 
 Derived paths are created by `scripts/lib/common.sh`, including:
