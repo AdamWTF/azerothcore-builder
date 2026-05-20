@@ -1,0 +1,48 @@
+# Optional OliveTin configuration example for acore-manager.
+#
+# OliveTin is not required by acore-manager and is not installed by this
+# repository. Copy or adapt this file for your OliveTin installation if you want
+# web buttons for common server actions.
+#
+# Adjust /opt/acore-manager/bin/acore-manager in each action if acore-manager
+# is installed somewhere else.
+
+actions:
+  - title: Status
+    shell: /opt/acore-manager/bin/acore-manager status
+
+  - title: Start AzerothCore
+    shell: /opt/acore-manager/bin/acore-manager start
+
+  - title: Stop AzerothCore
+    shell: /opt/acore-manager/bin/acore-manager stop
+
+  - title: Restart AzerothCore
+    shell: /opt/acore-manager/bin/acore-manager restart
+
+  - title: Restart Worldserver
+    shell: /opt/acore-manager/bin/acore-manager restart-world
+
+  - title: Restart Authserver
+    shell: /opt/acore-manager/bin/acore-manager restart-auth
+
+  - title: View World Logs
+    shell: /opt/acore-manager/bin/acore-manager logs-world
+
+  - title: View Auth Logs
+    shell: /opt/acore-manager/bin/acore-manager logs-auth
+
+  - title: View Last Errors
+    shell: /opt/acore-manager/bin/acore-manager last-errors
+
+  - title: Backup Database
+    shell: /opt/acore-manager/bin/acore-manager db-backup
+
+  - title: Build Latest Release
+    shell: /opt/acore-manager/bin/acore-manager release-latest
+
+  - title: List Releases
+    shell: /opt/acore-manager/bin/acore-manager list-releases
+
+  - title: Rollback Release
+    shell: /opt/acore-manager/bin/acore-manager rollback
