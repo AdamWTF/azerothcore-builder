@@ -1,0 +1,23 @@
+# acore-manager default settings
+
+ACM_ROOT="/opt/acore-manager"
+
+ACORE_REPO="https://github.com/azerothcore/azerothcore-wotlk.git"
+ACORE_BRANCH="master"
+ACORE_USER="azerothcore"
+ACORE_GROUP="azerothcore"
+
+AUTH_SERVICE="azerothcore-auth.service"
+WORLD_SERVICE="azerothcore-world.service"
+
+MYSQL_HOST="127.0.0.1"
+MYSQL_PORT="3306"
+MYSQL_AUTH_DB="acore_auth"
+MYSQL_WORLD_DB="acore_world"
+MYSQL_CHAR_DB="acore_characters"
+
+DATADIR="/opt/acore-manager/shared/data"
+CONFIG_DIR="/opt/acore-manager/shared/configs"
+
+BUILD_TYPE="RelWithDebInfo"
+BUILD_THREADS="auto"

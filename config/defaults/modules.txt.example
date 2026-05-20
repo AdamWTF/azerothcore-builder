@@ -1,0 +1,7 @@
+# AzerothCore modules to clone and build.
+#
+# Format:
+# module-name|git-url|branch
+#
+# Example:
+# mod-example|https://github.com/example/mod-example.git|master

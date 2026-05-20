@@ -1,14 +1,18 @@
-# AzerothCore Builder
+# acore-manager
 
-A small build and deployment helper for maintaining a custom AzerothCore server from a separate build machine.
+`acore-manager` is a reusable Linux server manager for AzerothCore.
 
-This project is designed for a workflow where AzerothCore is built on a more powerful machine, then the compiled server and relevant SQL/module source files are deployed to a remote Linux server.
+It provides a practical toolkit for building, releasing, running, monitoring, backing up, and rolling back AzerothCore server deployments. The current repository keeps that scope deliberately small: it contains focused scripts for updating sources and modules, building into staging, creating timestamped releases, switching the active release, managing services, checking database connectivity, validating configuration, and viewing logs.
 
-The original use case is a private AzerothCore + PlayerBots server, but the scripts are intentionally generic enough to support other AzerothCore module combinations.
+The default example install root is:
+
+```text
+/opt/acore-manager
+```
 
 ## What this project does
 
-`azerothcore-builder` can:
+`acore-manager` can:
 
 - Clone or update the AzerothCore source tree.
 - Clone or update a list of configured modules.
@@ -21,38 +25,52 @@ The original use case is a private AzerothCore + PlayerBots server, but the scri
 - Deploy module source trees to the remote host so module SQL is available.
 - Restart or check the remote `authserver` and `worldserver` systemd services.
 - Follow remote server logs.
+- Back up the remote `etc` directory before deployment, when configured.
 
-## Intended workflow
+## Intended Workflow
 
 The intended setup is:
 
 ```text
-Build machine
-  └── Builds AzerothCore from source
-  └── Pulls modules listed in modules.txt
-  └── Stages compiled server files locally
-  └── Deploys to remote server over SSH
+Local build environment
+  - Builds AzerothCore from source
+  - Pulls modules listed in modules.txt
+  - Stages compiled server files locally
+  - Deploys to a remote Linux server over SSH
 
 Remote server
-  └── Runs authserver/worldserver via systemd
-  └── Stores runtime config in /opt/azerothcore/server/etc
-  └── Stores deployed source SQL in /opt/azerothcore/source
-````
-
-## Repository layout
-
-```text
-azerothcore-builder/
-├── build-and-deploy.sh
-├── config.env
-├── config.env.example
-├── modules.txt
-└── README.md
+  - Runs authserver/worldserver via systemd
+  - Stores runtime config in /opt/acore-manager/server/etc
+  - Stores deployed source SQL in /opt/acore-manager/source
 ```
 
-### `build-and-deploy.sh`
+## Repository Layout
 
-Main script used to sync source, build, deploy, restart services, and view logs.
+```text
+acore-manager/
+|-- config.env
+|-- config.env.example
+|-- modules.txt
+|-- scripts/
+|   |-- build/
+|   |   |-- acore-build.sh
+|   |   |-- acore-create-release.sh
+|   |   `-- acore-release-latest.sh
+|   |-- lib/
+|   |   `-- common.sh
+|   |-- setup/
+|   |-- source/
+|   |-- runtime/
+|   |-- releases/
+|   |-- db/
+|   |-- config/
+|   `-- logs/
+`-- README.md
+```
+
+### `scripts/`
+
+Category-based helper scripts for source updates, builds, release management, runtime service control, logs, database checks, and config validation.
 
 ### `config.env`
 
@@ -84,7 +102,7 @@ mod-ah-bot|https://github.com/azerothcore/mod-ah-bot.git|master
 
 ## Prerequisites
 
-On the build machine:
+On the local build environment:
 
 ```bash
 sudo apt update
@@ -95,154 +113,129 @@ You will also need the normal AzerothCore build dependencies installed.
 
 For Ubuntu/Debian-based systems, refer to the official AzerothCore installation documentation for the full dependency list.
 
-The script expects SSH access to the remote server to already work.
+Remote management scripts expect SSH or shell access to the target server to already work before you run them there.
 
 Example:
 
 ```bash
-ssh user@server-ip
+ssh <your-user>@<server-host>
 ```
 
 ## Commands
 
-### Check prerequisites and SSH
+### Full Local Release Workflow
 
 ```bash
-./build-and-deploy.sh check
+./scripts/build/acore-release-latest.sh
 ```
 
-This verifies required local tools and confirms SSH connectivity to the remote server.
+This orchestrates config validation, database checks, source/module updates, build, release creation, optional config backup, release switch, and final status by calling the smaller scripts.
 
----
-
-### Sync AzerothCore source and modules
+### Validate Configuration
 
 ```bash
-./build-and-deploy.sh sync-source
+./scripts/config/acore-validate-config.sh
+```
+
+This checks required config variables, required commands, service names, and expected paths.
+
+### Sync AzerothCore Source and Modules
+
+```bash
+./scripts/source/acore-update-source.sh
+./scripts/source/acore-update-modules.sh
 ```
 
 This will:
 
-* Clone or update AzerothCore.
-* Clone or update all modules listed in `modules.txt`.
-* Validate that all expected module directories exist locally.
+- Clone or update AzerothCore.
+- Clone or update all modules listed in `config/local/modules.txt`, or the default example if no local module list exists.
 
-### Build only
+### Build Only
 
 ```bash
-./build-and-deploy.sh build
+./scripts/build/acore-build.sh
 ```
 
 This will:
 
-* Clean the build directory.
-* Configure CMake.
-* Build AzerothCore.
-* Install the build into the local staging directory.
+- Clean the staging directory.
+- Configure CMake.
+- Build AzerothCore.
+- Install the build into `BUILD_DIR/staging`.
 
-It does not deploy to the remote server.
+It does not switch the active release or restart services.
 
-### Deploy existing staged build
-
-```bash
-./build-and-deploy.sh deploy
-```
-
-This deploys the existing staged build to the remote server.
-
-It does not rebuild first.
-
-This is useful if the build succeeded but deployment failed later.
-
-### Sync, build, and deploy everything
+### Create a Release
 
 ```bash
-./build-and-deploy.sh all
+./scripts/build/acore-create-release.sh
 ```
 
-This performs the full workflow:
+This copies `BUILD_DIR/staging` into a timestamped folder under `RELEASES_DIR` and writes `metadata/release-info.txt`.
 
-1. Check prerequisites.
-2. Check remote SSH.
-3. Sync AzerothCore and modules.
-4. Build the server.
-5. Deploy the server.
-6. Deploy SQL/source files.
-7. Fix permissions.
-8. Restart services, if configured.
+It does not switch the active release or restart services.
 
-### Deploy SQL/source files only
+### List and Switch Releases
 
 ```bash
-./build-and-deploy.sh sql
+./scripts/releases/acore-list-releases.sh
+./scripts/releases/acore-switch-release.sh <release-name>
 ```
 
-This is useful when the compiled server has already been deployed, but module SQL/source files need to be refreshed on the remote server.
+Switching a release validates the target release, stops world, stops auth, updates `CURRENT_LINK`, starts auth, then starts world.
 
-It deploys:
-
-```text
-AzerothCore SQL:
-  SOURCE_DIR/data/sql/
-  -> REMOTE_SOURCE_DIR/data/sql/
-
-Module source trees:
-  SOURCE_DIR/modules/<module>
-  -> REMOTE_SOURCE_DIR/modules/<module>
-```
-
-This command is especially useful when a module expects database tables that are missing because its SQL was not available on the server.
-
-### Restart remote services
+### Roll Back or Prune Releases
 
 ```bash
-./build-and-deploy.sh restart
+./scripts/releases/acore-rollback.sh
+./scripts/releases/acore-prune-releases.sh
 ```
 
-Restarts both configured systemd services:
+Rollback selects the previous release by sorted release directory order and delegates to the release switch script.
+
+### Manage Runtime Services
+
+```bash
+./scripts/runtime/acore-start.sh
+./scripts/runtime/acore-stop.sh
+./scripts/runtime/acore-restart.sh
+./scripts/runtime/acore-restart-auth.sh
+./scripts/runtime/acore-restart-world.sh
+```
+
+These scripts use the configured systemd services:
 
 ```text
 AUTH_SERVICE
 WORLD_SERVICE
 ```
 
-### Check remote service status
+### Check Server Status
 
 ```bash
-./build-and-deploy.sh status
+./scripts/runtime/acore-status.sh
 ```
 
-Displays systemd status for auth and world services.
+Displays active release, service status, common listening ports, disk usage, memory usage, and source commit information.
 
-### Follow worldserver logs
+### View Logs
 
 ```bash
-./build-and-deploy.sh logs
+./scripts/logs/acore-logs-auth.sh
+./scripts/logs/acore-logs-world.sh
+./scripts/logs/acore-last-errors.sh
 ```
 
-Equivalent to following:
+### Check Database Connectivity
 
 ```bash
-journalctl -u azerothcore-world -f
+./scripts/db/acore-db-check.sh
 ```
 
-using the configured remote service name.
+Checks MySQL connectivity, version, and configured AzerothCore databases using local ignored credentials when present.
 
-### Follow authserver logs
-
-```bash
-./build-and-deploy.sh logs-auth
-```
-
-Equivalent to following:
-
-```bash
-journalctl -u azerothcore-auth -f
-```
-
-using the configured remote service name.
-
-## Module handling
+## Module Handling
 
 Modules are defined in `modules.txt`.
 
@@ -260,36 +253,36 @@ The script also validates that every configured module exists locally before bui
 
 If a module is missing, the script fails fast instead of silently deploying an incomplete module set.
 
-## Remote directory structure
+## Remote Directory Structure
 
 The remote server is expected to use a layout similar to:
 
 ```text
-/opt/azerothcore/
-├── server/
-│   ├── bin/
-│   │   ├── authserver
-│   │   └── worldserver
-│   └── etc/
-│       ├── authserver.conf
-│       ├── worldserver.conf
-│       └── modules/
-│           ├── playerbots.conf
-│           ├── mod_ahbot.conf
-│           └── individualProgression.conf
-├── source/
-│   ├── data/
-│   │   └── sql/
-│   └── modules/
-│       ├── mod-playerbots/
-│       ├── mod-ah-bot/
-│       └── mod-individual-progression/
-└── backups/
+/opt/acore-manager/
+|-- server/
+|   |-- bin/
+|   |   |-- authserver
+|   |   `-- worldserver
+|   `-- etc/
+|       |-- authserver.conf
+|       |-- worldserver.conf
+|       `-- modules/
+|           |-- playerbots.conf
+|           |-- mod_ahbot.conf
+|           `-- individualProgression.conf
+|-- source/
+|   |-- data/
+|   |   `-- sql/
+|   `-- modules/
+|       |-- mod-playerbots/
+|       |-- mod-ah-bot/
+|       `-- mod-individual-progression/
+`-- backups/
 ```
 
 The exact paths are controlled by `config.env`.
 
-## Systemd services
+## Systemd Services
 
 The script assumes the remote server has systemd services for AzerothCore.
 
