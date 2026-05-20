@@ -13,7 +13,7 @@ Clone the repository where you want to manage it. If you use the default root:
 ```bash
 sudo mkdir -p /opt/acore-manager
 sudo chown "$USER":"$USER" /opt/acore-manager
-git clone <repository-url> /opt/acore-manager
+git clone https://github.com/AdamWTF/acore-manager.git /opt/acore-manager
 cd /opt/acore-manager
 ```
 
