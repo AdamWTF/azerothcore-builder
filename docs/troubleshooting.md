@@ -1,5 +1,7 @@
 # Troubleshooting
 
+For the complete first-server flow, including data files, configs, databases, services, firewall, and client connection, see [Full Server Setup](full-server-setup.md).
+
 ## Validate First
 
 ```bash
@@ -61,6 +63,27 @@ bin/worldserver
 ```
 
 Confirm systemd templates match your configured user, group, and install root.
+
+Also confirm client data exists:
+
+```text
+/opt/acore-manager/shared/data/dbc
+/opt/acore-manager/shared/data/maps
+/opt/acore-manager/shared/data/vmaps
+/opt/acore-manager/shared/data/mmaps
+```
+
+and that `authserver.conf` and `worldserver.conf` have been prepared from the release `.conf.dist` files.
+
+## Client Cannot Connect
+
+Check the client realmlist, firewall, and ports:
+
+```bash
+ss -ltnp | grep -E '3724|8085'
+```
+
+If login works but the realm or character list hangs, check the realm address in the auth database, worldserver port reachability, and both service logs.
 
 ## Build Fails
 

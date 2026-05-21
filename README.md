@@ -1,4 +1,4 @@
-# Acore Manager
+# acore-manager
 
 `acore-manager` is a reusable Linux server manager for AzerothCore. It provides small shell tools for updating source and modules, building staged server files, creating timestamped releases, switching or rolling back releases, managing systemd services, viewing logs, and backing up configuration and databases.
 
@@ -39,14 +39,27 @@ Use the CLI wrapper for common actions:
 ./bin/acore-manager list-releases
 ```
 
-After a release exists, switch to it:
+Creating a release does not mean the server is running. A real first setup still needs client data files, `authserver.conf` and `worldserver.conf`, databases, installed systemd services, and firewall/client checks. Follow the complete guide before switching a first production release.
+
+Minimal operational flow:
 
 ```bash
+./bin/acore-manager validate
+./bin/acore-manager update-source
+./bin/acore-manager update-modules
+./bin/acore-manager build
+./bin/acore-manager create-release
+./bin/acore-manager list-releases
+# prepare data files, configs, database, and systemd services
 ./bin/acore-manager switch-release <release-name>
+./bin/acore-manager status
+./bin/acore-manager logs-world
 ```
 
 ## Documentation
 
+- [Full Server Setup](docs/full-server-setup.md)
+- [Command Reference](docs/commands.md)
 - [Install](docs/install.md)
 - [Configuration](docs/configuration.md)
 - [Modules](docs/modules.md)

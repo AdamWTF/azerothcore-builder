@@ -13,7 +13,7 @@ Clone the repository where you want to manage it. If you use the default root:
 ```bash
 sudo mkdir -p /opt/acore-manager
 sudo chown "$USER":"$USER" /opt/acore-manager
-git clone https://github.com/AdamWTF/acore-manager.git /opt/acore-manager
+git clone https://github.com/<your-org>/acore-manager.git /opt/acore-manager
 cd /opt/acore-manager
 ```
 
@@ -79,3 +79,5 @@ After bootstrap:
 ```
 
 If `bin/acore-manager` is added to your `PATH`, you can run `acore-manager` from anywhere.
+
+At this point you have `acore-manager` installed, not necessarily a running AzerothCore server. Continue with [Full Server Setup](full-server-setup.md) for source updates, build/release, client data files, runtime configs, databases, systemd services, logs, firewall, and client connection checks.
