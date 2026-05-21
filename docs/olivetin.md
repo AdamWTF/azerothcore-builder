@@ -1,21 +1,183 @@
 # OliveTin
 
-OliveTin integration is optional. `acore-manager` does not require or install OliveTin.
-
-An example config is provided at:
-
-```text
-olivetin/config.yaml.example
-```
-
-It exposes common actions as web buttons by calling the CLI wrapper:
+OliveTin is an optional web UI for running predefined shell commands. In `acore-manager`, it can provide buttons for common server actions while still calling the normal CLI wrapper:
 
 ```text
 /opt/acore-manager/bin/acore-manager
 ```
 
-Actions include status, start, stop, restart, logs, last errors, database backup, build latest release, list releases, and rollback.
+`acore-manager` does not require OliveTin. Do not expose OliveTin directly to the public internet; treat it as LAN/VPN/Twingate-only.
 
-If your install path differs, adjust the command path in the OliveTin config after copying it into your OliveTin setup.
+## Files
 
-Review permissions carefully before exposing service control or backup actions through a web UI.
+```text
+olivetin/config.yaml.example
+olivetin/acore-manager.sudoers.example
+scripts/integrations/acore-render-olivetin-config.sh
+scripts/integrations/acore-install-olivetin.sh
+scripts/integrations/acore-validate-olivetin-config.sh
+```
+
+The example config includes buttons for status, logs, service restarts, backups, build/release actions, and rollback. Long-running or dangerous actions include confirmation prompts where OliveTin supports them.
+
+## Validate The Example
+
+From the repo:
+
+```bash
+./scripts/integrations/acore-validate-olivetin-config.sh
+```
+
+Basic CLI test:
+
+```bash
+/opt/acore-manager/bin/acore-manager status
+```
+
+## Render Config Only
+
+If OliveTin is already installed, render the acore-manager config:
+
+```bash
+sudo ./scripts/integrations/acore-render-olivetin-config.sh
+```
+
+This creates `/etc/OliveTin` if missing, backs up any existing `/etc/OliveTin/config.yaml`, and writes the example config to:
+
+```text
+/etc/OliveTin/config.yaml
+```
+
+It does not install, enable, or start OliveTin.
+
+## Install OliveTin
+
+To install OliveTin on an amd64/x86_64 Ubuntu/Debian host:
+
+```bash
+sudo ./scripts/integrations/acore-install-olivetin.sh
+```
+
+The installer:
+
+- installs `curl` and `ca-certificates` if needed
+- downloads the latest official `.deb` from GitHub
+- installs the package with dependency resolution
+- renders the acore-manager OliveTin config
+- enables and starts the `OliveTin` service
+- does not open firewall ports
+
+Access hint:
+
+```text
+http://SERVER-IP:1337
+```
+
+Replace `SERVER-IP` with the server address reachable from your LAN/VPN.
+
+## Service Status And Logs
+
+```bash
+systemctl status OliveTin --no-pager
+journalctl -u OliveTin -n 100 --no-pager
+```
+
+Default OliveTin port:
+
+```text
+1337
+```
+
+## Firewall
+
+Do not expose OliveTin publicly. If using UFW, allow only a trusted LAN/VPN range, for example:
+
+```bash
+sudo ufw allow from 192.168.50.0/24 to any port 1337 proto tcp comment 'OliveTin LAN'
+```
+
+Adjust the network range for your environment.
+
+## Disable OliveTin
+
+```bash
+sudo systemctl disable --now OliveTin
+```
+
+## Permissions And Sudoers
+
+Depending on the package/service configuration, OliveTin may run as root. If it runs as root, the sudoers example is not needed.
+
+For a hardened non-root setup, run OliveTin as a dedicated service user, install a narrow sudoers rule, and change OliveTin action commands to use `sudo -n`.
+
+Example sudoers file:
+
+```text
+olivetin/acore-manager.sudoers.example
+```
+
+Install it with validation:
+
+```bash
+sudo install -m 0440 olivetin/acore-manager.sudoers.example /etc/sudoers.d/acore-manager-olivetin
+sudo visudo -cf /etc/sudoers.d/acore-manager-olivetin
+```
+
+The sudoers example grants only listed `acore-manager` commands. It does not allow `NOPASSWD: ALL`.
+
+## Troubleshooting
+
+### Config YAML Invalid
+
+Check OliveTin logs:
+
+```bash
+journalctl -u OliveTin -n 100 --no-pager
+```
+
+Re-render the config:
+
+```bash
+sudo ./scripts/integrations/acore-render-olivetin-config.sh
+```
+
+### Command Permission Denied
+
+Check whether OliveTin is running as root or as another user:
+
+```bash
+systemctl cat OliveTin
+systemctl status OliveTin --no-pager
+```
+
+If using a non-root service user, review `olivetin/acore-manager.sudoers.example`.
+
+### acore-manager Script Not Executable
+
+```bash
+sudo bash /opt/acore-manager/scripts/setup/acore-fix-permissions.sh
+```
+
+### Browser Cannot Connect
+
+Check service status and listening port:
+
+```bash
+systemctl status OliveTin --no-pager
+ss -ltn | grep ':1337'
+```
+
+Confirm your firewall allows access only from the trusted LAN/VPN range.
+
+### Service Failed To Start
+
+```bash
+journalctl -u OliveTin -n 100 --no-pager
+sudo ./scripts/integrations/acore-validate-olivetin-config.sh
+```
+
+Fix the reported issue, then restart:
+
+```bash
+sudo systemctl restart OliveTin
+```

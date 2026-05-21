@@ -57,6 +57,8 @@ After a release exists, switch to it:
 - [OliveTin](docs/olivetin.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
+OliveTin web buttons are optional. See [OliveTin](docs/olivetin.md) for setup steps, and keep OliveTin LAN/VPN-only rather than publicly exposed.
+
 If a script fails with `Permission denied`, run:
 
 ```bash
