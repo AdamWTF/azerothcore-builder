@@ -88,6 +88,19 @@ Default OliveTin port:
 1337
 ```
 
+## Changing Button Icons
+
+The example config sets global defaults with `defaultIconForActions`, `defaultIconForDirectories`, and `defaultIconForBack`. Individual buttons can override the action default with an `icon` field:
+
+```yaml
+actions:
+  - title: Status
+    icon: "📊"
+    shell: "/opt/acore-manager/bin/acore-manager status"
+```
+
+Edit `olivetin/config.yaml.example` before rendering, or edit `/etc/OliveTin/config.yaml` directly after rendering and restart OliveTin.
+
 ## Firewall
 
 Do not expose OliveTin publicly. If using UFW, allow only a trusted LAN/VPN range, for example:
