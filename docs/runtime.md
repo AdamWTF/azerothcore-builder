@@ -26,13 +26,32 @@ sudo systemctl enable azerothcore-world.service
 
 Prepare databases, data files, and configs before starting services. See [Full Server Setup](full-server-setup.md).
 
+Runtime configs are shared and linked into the active release:
+
+```text
+/opt/acore-manager/current/etc/authserver.conf -> /opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/current/etc/worldserver.conf -> /opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/current/etc/modules -> /opt/acore-manager/shared/configs/modules
+```
+
+`switch-release` relinks these paths before starting services.
+
 ## Status
 
 ```bash
 ./bin/acore-manager status
+./bin/acore-manager validate-runtime
 ```
 
 Shows active release, service status, common ports, disk usage, memory usage, and source commit information.
+
+Verify config links:
+
+```bash
+ls -l /opt/acore-manager/current/etc
+readlink -f /opt/acore-manager/current/etc/worldserver.conf
+readlink -f /opt/acore-manager/current/etc/modules
+```
 
 ## Service Control
 
@@ -101,6 +120,8 @@ ss -ltnp | grep -E '3724|8085'
 - Missing `/opt/acore-manager/current`: create and switch to a release.
 - Missing data files: copy `dbc`, `maps`, `vmaps`, and `mmaps` into `/opt/acore-manager/shared/data`.
 - Missing configs: prepare `authserver.conf` and `worldserver.conf` from release `.conf.dist` files.
+- Broken config links: run `sudo ./bin/acore-manager link-configs`.
+- DataDir points at a release path: set it to `/opt/acore-manager/shared/data` in shared `worldserver.conf`.
 - DB failures: run `./bin/acore-manager db-check` and check credentials in `config/local/db.conf`.
 - Client cannot connect: check realmlist, firewall, auth port `3724`, world port `8085`, and service logs.
 

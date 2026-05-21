@@ -52,6 +52,67 @@ check_source_checkout() {
   fi
 }
 
+check_file_warn() {
+  local name="$1"
+  local path="$2"
+
+  if [[ -f "$path" ]]; then
+    echo "OK: $name exists: $path"
+  else
+    echo "WARN: $name does not exist yet: $path"
+  fi
+}
+
+check_active_config_links() {
+  if [[ ! -L "$CURRENT_LINK" ]]; then
+    echo "WARN: CURRENT_LINK is not set yet: $CURRENT_LINK"
+    return
+  fi
+
+  local current_target
+  current_target="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
+  if [[ -z "$current_target" || ! -d "$current_target" ]]; then
+    echo "WARN: CURRENT_LINK does not point to a release: $CURRENT_LINK"
+    return
+  fi
+
+  echo "OK: CURRENT_LINK points to: $current_target"
+
+  check_link_target "$CURRENT_LINK/etc/authserver.conf" "$CONFIG_DIR/authserver.conf"
+  check_link_target "$CURRENT_LINK/etc/worldserver.conf" "$CONFIG_DIR/worldserver.conf"
+  check_link_target "$CURRENT_LINK/etc/modules" "$MODULE_CONFIG_DIR"
+}
+
+check_link_target() {
+  local link_path="$1"
+  local expected_path="$2"
+
+  if [[ ! -L "$link_path" ]]; then
+    echo "WARN: expected symlink is missing: $link_path"
+    return
+  fi
+
+  local actual_target expected_target
+  actual_target="$(readlink -f "$link_path" 2>/dev/null || true)"
+  expected_target="$(readlink -f "$expected_path" 2>/dev/null || true)"
+
+  if [[ -n "$actual_target" && "$actual_target" == "$expected_target" ]]; then
+    echo "OK: $link_path -> $expected_path"
+  else
+    echo "WARN: $link_path points to $actual_target, expected $expected_path"
+  fi
+}
+
+check_data_dirs() {
+  for name in dbc maps vmaps mmaps; do
+    if [[ -d "$DATADIR/$name" ]]; then
+      echo "OK: data directory exists: $DATADIR/$name"
+    else
+      echo "WARN: data directory missing: $DATADIR/$name"
+    fi
+  done
+}
+
 log "Required Variables"
 for name in \
   ACM_ROOT \
@@ -84,6 +145,11 @@ check_path "SOURCE_ROOT" "$SOURCE_ROOT"
 check_source_checkout
 check_path "DATADIR" "$DATADIR"
 check_path "CONFIG_DIR" "$CONFIG_DIR"
+check_path "MODULE_CONFIG_DIR" "$MODULE_CONFIG_DIR"
+check_file_warn "authserver.conf" "$CONFIG_DIR/authserver.conf"
+check_file_warn "worldserver.conf" "$CONFIG_DIR/worldserver.conf"
+check_active_config_links
+check_data_dirs
 
 log "Services"
 require_var AUTH_SERVICE

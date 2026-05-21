@@ -64,7 +64,31 @@ The metadata includes build date, AzerothCore commit, module commits, build type
 
 Creating a release does not change `CURRENT_LINK` and does not restart services.
 
+Generated config templates are preserved under:
+
+```text
+/opt/acore-manager/releases/<timestamp>/etc.dist
+```
+
+The release `etc` directory is reserved for symlinks to shared live configs. Do not edit configs under `releases/<release>/etc` directly.
+
 It also does not guarantee the server is ready to run. A running server still needs prepared data files, runtime config files, reachable databases, installed systemd services, and firewall/client checks. See [Full Server Setup](full-server-setup.md).
+
+## Prepare Shared Configs
+
+```bash
+sudo ./bin/acore-manager prepare-configs <release-name>
+```
+
+This seeds missing shared configs from release templates:
+
+```text
+/opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/shared/configs/modules/*.conf
+```
+
+Existing shared configs are not overwritten. Edit shared configs, not release-local config files.
 
 ## Switch Release
 
@@ -81,7 +105,13 @@ Switching validates the release, updates:
 
 and restarts services in the safe order: stop world, stop auth, start auth, start world.
 
-On a first server, prepare data files and configs before switching, because `switch-release` starts services.
+On a first server, prepare data files and configs before switching, because `switch-release` starts services. During switch, `acore-manager` relinks shared configs into the new active release before starting services:
+
+```text
+/opt/acore-manager/current/etc/authserver.conf -> /opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/current/etc/worldserver.conf -> /opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/current/etc/modules -> /opt/acore-manager/shared/configs/modules
+```
 
 ## Full Workflow
 

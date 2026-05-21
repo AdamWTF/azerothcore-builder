@@ -94,3 +94,41 @@ This checks required variables, required commands, service names, and path statu
 ```
 
 This backs up shared configs, `config/local`, and installed systemd service files when present. Missing optional paths produce warnings.
+
+## Runtime Configs
+
+Live AzerothCore runtime configs belong in shared persistent storage:
+
+```text
+/opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/shared/configs/modules/*.conf
+```
+
+Seed them from release templates:
+
+```bash
+sudo ./bin/acore-manager prepare-configs <release-name>
+```
+
+Edit shared configs, not files inside `/opt/acore-manager/releases/<release>/etc`.
+
+When a release is active, link shared configs into it:
+
+```bash
+sudo ./bin/acore-manager link-configs
+```
+
+Expected links:
+
+```text
+/opt/acore-manager/current/etc/authserver.conf -> /opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/current/etc/worldserver.conf -> /opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/current/etc/modules -> /opt/acore-manager/shared/configs/modules
+```
+
+`DataDir` in `worldserver.conf` should point to:
+
+```text
+/opt/acore-manager/shared/data
+```

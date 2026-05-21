@@ -29,6 +29,15 @@ else
   cp -a "$STAGING_DIR/." "$release_dir/"
 fi
 
+if [[ -d "$release_dir/etc" ]]; then
+  mv "$release_dir/etc" "$release_dir/etc.dist"
+  mkdir -p "$release_dir/etc"
+  echo "Stored pristine config templates: $release_dir/etc.dist"
+else
+  mkdir -p "$release_dir/etc" "$release_dir/etc.dist"
+  echo "No staged etc directory found; created empty etc and etc.dist directories."
+fi
+
 mkdir -p "$release_dir/metadata"
 
 source_commit="unavailable"
@@ -51,6 +60,9 @@ fi
   echo "  RELEASES_DIR: $RELEASES_DIR"
   echo "  RELEASE_DIR: $release_dir"
   echo "  CURRENT_LINK: $CURRENT_LINK"
+  echo "  CONFIG_DIR: $CONFIG_DIR"
+  echo "  MODULE_CONFIG_DIR: $MODULE_CONFIG_DIR"
+  echo "  DATADIR: $DATADIR"
   echo
   echo "AzerothCore commit:"
   echo "  $source_commit"

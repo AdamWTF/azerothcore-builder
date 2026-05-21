@@ -28,4 +28,5 @@ done
 [[ -n "$previous_release" ]] || die "no previous release exists before current release: $current_release"
 
 echo "Rolling back from $current_release to $previous_release"
+echo "WARN: rollback switches binaries and relinks shared configs, but does not roll back database schema changes or shared config edits."
 "$SCRIPT_DIR/acore-switch-release.sh" "$previous_release"

@@ -51,6 +51,8 @@ Minimal operational flow:
 ./bin/acore-manager create-release
 ./bin/acore-manager list-releases
 # prepare data files, configs, database, and systemd services
+./bin/acore-manager prepare-configs <release-name>
+./bin/acore-manager check-data
 ./bin/acore-manager switch-release <release-name>
 ./bin/acore-manager status
 ./bin/acore-manager logs-world

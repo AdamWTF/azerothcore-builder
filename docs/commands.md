@@ -15,6 +15,10 @@ Risk levels:
 | --- | --- | --- | --- | --- | --- |
 | `help`, `-h`, `--help` | Print wrapper usage. | Built into `bin/acore-manager` | No | Read-only | `./bin/acore-manager --help` |
 | `validate` | Validate config variables, commands, service names, and path status. | `scripts/config/acore-validate-config.sh` | Usually no | Read-only | `./bin/acore-manager validate` |
+| `validate-runtime` | Validate active release, shared config links, and data checks. | `scripts/config/acore-validate-runtime.sh` | Usually no | Read-only | `./bin/acore-manager validate-runtime` |
+| `prepare-configs` | Seed missing shared runtime configs from release templates. | `scripts/config/acore-prepare-configs.sh` | Usually yes | Safe | `sudo ./bin/acore-manager prepare-configs <release-name>` |
+| `link-configs` | Link shared configs into the active release. | `scripts/config/acore-link-shared-configs.sh` | Usually yes | Safe | `sudo ./bin/acore-manager link-configs` |
+| `check-data` | Check shared data directories and `worldserver.conf` `DataDir`. | `scripts/config/acore-check-data.sh` | No | Read-only | `./bin/acore-manager check-data` |
 | `config-diff` | Compare live configs against matching `.dist` files when available. | `scripts/config/acore-config-diff.sh` | Usually no | Read-only | `./bin/acore-manager config-diff` |
 
 Direct setup scripts:
@@ -37,7 +41,7 @@ Direct setup scripts:
 | --- | --- | --- | --- | --- | --- |
 | `build` | Build AzerothCore into `BUILD_DIR/staging`. | `scripts/build/acore-build.sh` | Depends on install ownership | Disruptive: long-running CPU/disk work | `./bin/acore-manager build` |
 | `create-release` | Create a timestamped release from staging. | `scripts/build/acore-create-release.sh` | Depends on install ownership | Safe | `./bin/acore-manager create-release` |
-| `release-latest` | Run validate, DB check, source/module update, build, release, optional config backup, switch, and status. | `scripts/build/acore-release-latest.sh` | Usually yes | Disruptive | `sudo ./bin/acore-manager release-latest` |
+| `release-latest` | Run validate, DB check, source/module update, build, release, shared config preparation, optional config backup, switch, and status. | `scripts/build/acore-release-latest.sh` | Usually yes | Disruptive | `sudo ./bin/acore-manager release-latest` |
 | `list-releases` | List releases and mark the active one. | `scripts/releases/acore-list-releases.sh` | No | Read-only | `./bin/acore-manager list-releases` |
 | `switch-release` | Switch `/opt/acore-manager/current` and restart services safely. | `scripts/releases/acore-switch-release.sh` | Yes | Disruptive | `sudo ./bin/acore-manager switch-release <release-name>` |
 | `rollback` | Switch to the previous release and restart services. | `scripts/releases/acore-rollback.sh` | Yes | Disruptive | `sudo ./bin/acore-manager rollback` |
@@ -96,5 +100,4 @@ These scripts are optional and are not required for core server management.
 Useful commands that are not currently implemented:
 
 - `install-services`: bootstrap installs service templates, but there is no separate wrapper command just for service installation.
-- `prepare-configs`: runtime config preparation is currently manual.
 - `check-db` / `backup-db`: use the implemented `db-check` and `db-backup` command names.

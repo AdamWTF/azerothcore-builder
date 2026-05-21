@@ -111,6 +111,8 @@ ensure_directories() {
     "$SHARED_DIR" \
     "$DATADIR" \
     "$CONFIG_DIR" \
+    "$MODULE_CONFIG_DIR" \
+    "$SHARED_LOG_DIR" \
     "$BACKUP_DIR" \
     "$ACM_ROOT/logs"
 
@@ -122,6 +124,8 @@ ensure_directories() {
     "$SHARED_DIR" \
     "$DATADIR" \
     "$CONFIG_DIR" \
+    "$MODULE_CONFIG_DIR" \
+    "$SHARED_LOG_DIR" \
     "$BACKUP_DIR" \
     "$ACM_ROOT/logs"
 }
@@ -216,6 +220,8 @@ Next steps:
 
   6. Switch to a release when ready:
      $ACM_REPO_ROOT/scripts/releases/acore-list-releases.sh
+     $ACM_REPO_ROOT/scripts/config/acore-prepare-configs.sh <release-name>
+     $ACM_REPO_ROOT/scripts/config/acore-check-data.sh
      $ACM_REPO_ROOT/scripts/releases/acore-switch-release.sh <release-name>
 
 Services were installed as templates only. They were not enabled or started.

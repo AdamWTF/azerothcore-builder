@@ -30,6 +30,10 @@ mkdir -p "$(dirname "$CURRENT_LINK")"
 ln -sfn "$release_dir" "$CURRENT_LINK"
 echo "Updated current link: $CURRENT_LINK -> $release_dir"
 
+link_configs_script="$ACM_REPO_ROOT/scripts/config/acore-link-shared-configs.sh"
+[[ -x "$link_configs_script" ]] || die "shared config linker is not executable: $link_configs_script"
+"$link_configs_script"
+
 echo "Starting auth service: $AUTH_SERVICE"
 systemctl start "$AUTH_SERVICE" || die "failed to start auth service: $AUTH_SERVICE"
 

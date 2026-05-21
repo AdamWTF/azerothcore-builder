@@ -1,6 +1,9 @@
 # Generic acore-manager authserver service template.
 # Copy this file to /etc/systemd/system/ and adjust User, Group, and paths if
 # your local installation differs from the defaults shown here.
+#
+# Runtime configs are expected through the active release:
+# /opt/acore-manager/current/etc/authserver.conf -> /opt/acore-manager/shared/configs/authserver.conf
 
 [Unit]
 Description=AzerothCore Auth Server

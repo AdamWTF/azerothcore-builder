@@ -38,6 +38,8 @@ RELEASES_DIR="$ACM_ROOT/releases"
 CURRENT_LINK="$ACM_ROOT/current"
 SHARED_DIR="$ACM_ROOT/shared"
 BACKUP_DIR="$ACM_ROOT/backups"
+MODULE_CONFIG_DIR="$CONFIG_DIR/modules"
+SHARED_LOG_DIR="$SHARED_DIR/logs"
 
 log() {
   echo

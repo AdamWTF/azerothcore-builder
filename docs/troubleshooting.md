@@ -75,6 +75,71 @@ Also confirm client data exists:
 
 and that `authserver.conf` and `worldserver.conf` have been prepared from the release `.conf.dist` files.
 
+## Server Starts But Cannot Find worldserver.conf
+
+Check that shared configs are linked into the active release:
+
+```bash
+readlink -f /opt/acore-manager/current/etc/worldserver.conf
+sudo ./bin/acore-manager link-configs
+```
+
+The link should resolve to:
+
+```text
+/opt/acore-manager/shared/configs/worldserver.conf
+```
+
+## Module Config Not Loaded After Release Switch
+
+Check the module config link:
+
+```bash
+readlink -f /opt/acore-manager/current/etc/modules
+```
+
+It should resolve to:
+
+```text
+/opt/acore-manager/shared/configs/modules
+```
+
+If `current/etc/modules` is a real directory instead of a symlink, run:
+
+```bash
+sudo ./bin/acore-manager link-configs
+```
+
+The linker moves real files or directories aside with timestamped backups before creating symlinks.
+
+## Edited Release Config But Change Disappeared
+
+Do not edit files under:
+
+```text
+/opt/acore-manager/releases/<release>/etc
+```
+
+Edit shared configs instead:
+
+```text
+/opt/acore-manager/shared/configs
+```
+
+## DataDir Points To An Old Release Path
+
+Set `DataDir` in shared `worldserver.conf` to:
+
+```text
+/opt/acore-manager/shared/data
+```
+
+Then check:
+
+```bash
+./bin/acore-manager check-data
+```
+
 ## Client Cannot Connect
 
 Check the client realmlist, firewall, and ports:

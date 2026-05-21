@@ -81,3 +81,5 @@ After bootstrap:
 If `bin/acore-manager` is added to your `PATH`, you can run `acore-manager` from anywhere.
 
 At this point you have `acore-manager` installed, not necessarily a running AzerothCore server. Continue with [Full Server Setup](full-server-setup.md) for source updates, build/release, client data files, runtime configs, databases, systemd services, logs, firewall, and client connection checks.
+
+In particular, release creation alone is not enough. A first server still needs shared configs prepared with `prepare-configs`, data checked with `check-data`, and shared configs linked into the active release with `link-configs` or `switch-release`.

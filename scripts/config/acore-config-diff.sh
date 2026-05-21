@@ -62,20 +62,25 @@ if [[ ! -d "$CONFIG_DIR" ]]; then
   echo "WARN: CONFIG_DIR does not exist: $CONFIG_DIR"
 fi
 
-if [[ ! -d "$CURRENT_LINK/etc" ]]; then
-  echo "WARN: current release etc directory does not exist: $CURRENT_LINK/etc"
+dist_root="$CURRENT_LINK/etc.dist"
+if [[ ! -d "$dist_root" ]]; then
+  dist_root="$CURRENT_LINK/etc"
+fi
+
+if [[ ! -d "$dist_root" ]]; then
+  echo "WARN: current release config template directory does not exist: $CURRENT_LINK/etc.dist"
   exit 0
 fi
 
 found=false
 while IFS= read -r dist_file; do
   found=true
-  relative_path="${dist_file#$CURRENT_LINK/etc/}"
+  relative_path="${dist_file#$dist_root/}"
   live_relative="${relative_path%.dist}"
   live_file="$CONFIG_DIR/$live_relative"
   compare_pair "$live_file" "$dist_file"
-done < <(find "$CURRENT_LINK/etc" -type f -name '*.dist' | sort)
+done < <(find "$dist_root" -type f -name '*.dist' | sort)
 
 if [[ "$found" == "false" ]]; then
-  echo "WARN: no .dist files found under $CURRENT_LINK/etc"
+  echo "WARN: no .dist files found under $dist_root"
 fi

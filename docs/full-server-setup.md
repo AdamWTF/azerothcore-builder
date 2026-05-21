@@ -29,6 +29,8 @@ Important paths:
 /opt/acore-manager/shared                  shared runtime files
 /opt/acore-manager/shared/data             dbc/maps/vmaps/mmaps
 /opt/acore-manager/shared/configs          local server config copies
+/opt/acore-manager/shared/configs/modules  local module config copies
+/opt/acore-manager/shared/logs             file logs if configured
 /opt/acore-manager/logs                    local log path if configured
 config/defaults                            committed examples
 config/local                               local gitignored config
@@ -182,6 +184,16 @@ It also writes:
 
 Creating a release does not switch `/opt/acore-manager/current` and does not mean the server is running.
 
+Release directories are for release-specific binaries, libraries, metadata, and pristine config templates. Live runtime configs belong under `/opt/acore-manager/shared/configs`, not inside individual releases.
+
+When a release is created, generated config templates are stored under:
+
+```text
+/opt/acore-manager/releases/<timestamp>/etc.dist
+```
+
+The live release `etc` directory is reserved for symlinks to shared configs.
+
 ## Data Files
 
 AzerothCore needs extracted 3.3.5a client data. `acore-manager` does not download or extract these files for you.
@@ -232,18 +244,31 @@ unless you intentionally changed `DATADIR`.
 
 ## Config Files
 
-AzerothCore installs example config files such as `authserver.conf.dist` and `worldserver.conf.dist` in the staged/release `etc` directory. Prepare local runtime configs from those examples and keep real secrets out of git.
+AzerothCore installs example config files such as `authserver.conf.dist` and `worldserver.conf.dist`. `acore-manager` stores release templates in each release under `etc.dist`, then keeps live configs in shared persistent storage:
 
-Typical first-time flow after creating a release:
-
-```bash
-sudo mkdir -p /opt/acore-manager/shared/configs
-sudo cp /opt/acore-manager/releases/<release-name>/etc/authserver.conf.dist /opt/acore-manager/shared/configs/authserver.conf
-sudo cp /opt/acore-manager/releases/<release-name>/etc/worldserver.conf.dist /opt/acore-manager/shared/configs/worldserver.conf
-sudo chown -R <ACORE_USER>:<ACORE_GROUP> /opt/acore-manager/shared/configs
+```text
+/opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/shared/configs/modules/*.conf
 ```
 
-Never overwrite existing local configs without a backup:
+Prepare shared configs after creating a release:
+
+```bash
+sudo ./bin/acore-manager prepare-configs <release-name>
+```
+
+The command creates missing shared configs only. Existing shared configs are left unchanged.
+
+Edit shared configs, not release-local files:
+
+```bash
+sudo nano /opt/acore-manager/shared/configs/authserver.conf
+sudo nano /opt/acore-manager/shared/configs/worldserver.conf
+sudo nano /opt/acore-manager/shared/configs/modules/<module>.conf
+```
+
+Back up existing configs before risky edits:
 
 ```bash
 ./bin/acore-manager config-backup
@@ -262,7 +287,19 @@ with working directory:
 /opt/acore-manager/current/bin
 ```
 
-Depending on your AzerothCore build and config layout, you may need to copy your final `authserver.conf` and `worldserver.conf` into the release `etc` directory, symlink from release `etc` to `/opt/acore-manager/shared/configs`, or adjust copied service files to pass explicit config paths if your binaries support that. `acore-manager` currently backs up and diffs shared configs, but it does not automatically render or symlink runtime configs.
+`acore-manager` links shared configs into the active release with:
+
+```bash
+sudo ./bin/acore-manager link-configs
+```
+
+Expected active-release layout:
+
+```text
+/opt/acore-manager/current/etc/authserver.conf -> /opt/acore-manager/shared/configs/authserver.conf
+/opt/acore-manager/current/etc/worldserver.conf -> /opt/acore-manager/shared/configs/worldserver.conf
+/opt/acore-manager/current/etc/modules -> /opt/acore-manager/shared/configs/modules
+```
 
 Key values to check:
 
@@ -284,6 +321,12 @@ LoginDatabaseInfo     = "<mysql-host>;3306;<db-user>;<db-password>;acore_auth"
 WorldDatabaseInfo     = "<mysql-host>;3306;<db-user>;<db-password>;acore_world"
 CharacterDatabaseInfo = "<mysql-host>;3306;<db-user>;<db-password>;acore_characters"
 DataDir               = "/opt/acore-manager/shared/data"
+```
+
+Check data and `DataDir`:
+
+```bash
+./bin/acore-manager check-data
 ```
 
 ## Database Preparation
@@ -345,13 +388,15 @@ Switch to one:
 ./bin/acore-manager switch-release <release-name>
 ```
 
-This validates the release, stops world then auth, updates `/opt/acore-manager/current`, starts auth then world, and runs status. On a first server, prepare data files, configs, databases, and systemd templates before switching, because switching starts services.
+This validates the release, stops world then auth, updates `/opt/acore-manager/current`, relinks shared configs into the new active release, starts auth then world, and runs status. On a first server, prepare data files, shared configs, databases, and systemd templates before switching, because switching starts services.
 
 Confirm the current release:
 
 ```bash
 ./bin/acore-manager status
 readlink -f /opt/acore-manager/current
+readlink -f /opt/acore-manager/current/etc/worldserver.conf
+readlink -f /opt/acore-manager/current/etc/modules
 ```
 
 ## Start Services
@@ -451,6 +496,7 @@ For future maintenance:
 ./bin/acore-manager switch-release <release-name>
 ./bin/acore-manager status
 ./bin/acore-manager last-errors
+./bin/acore-manager validate-runtime
 ```
 
 Schedule downtime when needed. Back up databases and configs before switching real servers.
@@ -465,13 +511,19 @@ Schedule downtime when needed. Back up databases and configs before switching re
 ```
 
 Rollback selects the previous release by sorted release directory order and calls `switch-release`. It changes the active release symlink and restarts services. It does not roll back database migrations, data file changes, or manual config edits.
+Rollback also relinks shared configs into the rollback target. It does not restore old per-release configs unless you do that manually from backups.
 
 ## Troubleshooting Checklist
 
 - Permission denied running scripts: `sudo bash /opt/acore-manager/scripts/setup/acore-fix-permissions.sh`
 - No current release: run `./bin/acore-manager list-releases`, then switch to a valid release.
 - Missing data files: confirm `dbc`, `maps`, `vmaps`, and `mmaps` exist under `/opt/acore-manager/shared/data`.
-- Configs missing: prepare `authserver.conf` and `worldserver.conf` from release `.conf.dist` files.
+- Configs missing: run `sudo ./bin/acore-manager prepare-configs <release-name>`, edit shared configs, then run `sudo ./bin/acore-manager link-configs`.
+- Server cannot find `worldserver.conf`: verify `/opt/acore-manager/current/etc/worldserver.conf` points to `/opt/acore-manager/shared/configs/worldserver.conf`.
+- Module config not loaded after release switch: verify `/opt/acore-manager/current/etc/modules` points to `/opt/acore-manager/shared/configs/modules`.
+- Edited release config but change disappeared: edit `/opt/acore-manager/shared/configs`, not files under `/opt/acore-manager/releases/<release>/etc`.
+- `DataDir` points to an old release path: set `DataDir = "/opt/acore-manager/shared/data"` in shared `worldserver.conf`.
+- `current/etc/modules` is a real directory instead of a symlink: run `sudo ./bin/acore-manager link-configs`; the script moves existing real paths aside with timestamped backups.
 - DB connection failure: check `config/local/db.conf`, network access, MySQL grants, and `./bin/acore-manager db-check`.
 - Services fail to start: inspect `./bin/acore-manager last-errors` and `journalctl`.
 - Auth starts but world fails: check `DataDir`, world DB, modules, ports, and `worldserver.conf`.
@@ -484,6 +536,4 @@ Rollback selects the previous release by sorted release directory order and call
 
 ## TODOs
 
-- Add a first-class `prepare-configs` command.
 - Add an `install-services` command for users who skip bootstrap.
-- Add a service/config strategy that makes `/opt/acore-manager/shared/configs` the runtime config source without manual symlinks or service edits.

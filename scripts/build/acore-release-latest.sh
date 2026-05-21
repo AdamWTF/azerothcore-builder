@@ -49,6 +49,14 @@ release_path="$(awk -F': ' '/^Release path: / { value = $2 } END { print value }
 [[ -n "$release_path" ]] || die "unable to determine release path from acore-create-release.sh output"
 [[ -d "$release_path" ]] || die "created release path does not exist: $release_path"
 
+prepare_configs_script="$ACM_REPO_ROOT/scripts/config/acore-prepare-configs.sh"
+if [[ -x "$prepare_configs_script" ]]; then
+  run_step "Preparing shared configs" "$prepare_configs_script" "$release_name"
+else
+  log "Skipping shared config preparation"
+  echo "Optional script not found or not executable: $prepare_configs_script"
+fi
+
 config_backup_script="$ACM_REPO_ROOT/scripts/config/acore-config-backup.sh"
 if [[ -x "$config_backup_script" ]]; then
   run_step "Backing up config" "$config_backup_script"
